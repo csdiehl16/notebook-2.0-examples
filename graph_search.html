@@ -20,13 +20,18 @@
 
     display(graph)
   </script>
+  <script id="18" type="module" pinned="">
+    const stepSlider = view(Inputs.range([0, graphSolution.length -1], {step: 1, value: 0, label: "Search step"}));
+  </script>
   <script id="16" type="text/markdown">
     Using D3, we can show the results of the graph search.
   </script>
-  <script id="12" type="module">
+  <script id="12" type="module" pinned="">
     // Create an SVG visualization of the graph
     const height = 600;
-    const padding = 40
+    const padding = 40;
+
+    const current = graphSolution[stepSlider]
 
     const svg = d3.create("svg")
       .attr("width", width)
@@ -49,6 +54,9 @@
       distance: edge.distance
     }));
 
+    const isOnPath = (link) => current.explored.includes(link.source) && current.explored.includes(link.target)
+    const isOnFrontier = (link) => (current.frontier.includes(link.target) && current.explored.includes(link.source)) || (current.frontier.includes(link.source) && current.explored.includes(link.target))
+
     // Create links (edges)
     const link = svg.append("g")
       .selectAll("line")
@@ -58,8 +66,8 @@
       .attr("y1", d => nodes.find(n => n.id === d.source).y)
       .attr("x2", d => nodes.find(n => n.id === d.target).x)
       .attr("y2", d => nodes.find(n => n.id === d.target).y)
-      .attr("stroke", "#999")
-      .attr("stroke-width", 1.5);
+      .attr("stroke",  d => isOnPath(d) ? 'red' : isOnFrontier(d) ? "orange" : "#999")
+      .attr("stroke-width", d => isOnPath(d) || isOnFrontier ? 3.0 : 1.5);
 
     // Add distance labels on edges
     svg.append("g")
@@ -90,7 +98,9 @@
       .attr("cx", d => d.x)
       .attr("cy", d => d.y)
       .attr("r", 8)
-      .attr("fill", d => graphSolution.includes(d.id) ? 'red' : "#69b3a2")
+      .attr("fill", d => current.explored.includes(d.id) ? 'red' :
+        current.frontier.includes(d.id) ? 'darksalmon' :
+        "#69b3a2")
       .attr("stroke", "#333")
       .attr("stroke-width", 2);
 
@@ -120,56 +130,6 @@
   </script>
   <script id="2" type="text/x-python" pinned="" output="graphSolution" format="json">
     import json
-
-    graph = {
-      "nodes": {
-        "Arad": {"x": 91, "y": 492},
-        "Bucharest": {"x": 400, "y": 327},
-        "Craiova": {"x": 253, "y": 288},
-        "Drobeta": {"x": 165, "y": 299},
-        "Eforie": {"x": 562, "y": 293},
-        "Fagaras": {"x": 305, "y": 449},
-        "Giurgiu": {"x": 375, "y": 270},
-        "Hirsova": {"x": 534, "y": 350},
-        "Iasi": {"x": 473, "y": 506},
-        "Lugoj": {"x": 165, "y": 379},
-        "Mehadia": {"x": 168, "y": 339},
-        "Neamt": {"x": 406, "y": 537},
-        "Oradea": {"x": 131, "y": 571},
-        "Pitesti": {"x": 320, "y": 368},
-        "Rimnicu": {"x": 233, "y": 410},
-        "Sibiu": {"x": 207, "y": 457},
-        "Timisoara": {"x": 94, "y": 410},
-        "Urziceni": {"x": 456, "y": 350},
-        "Vaslui": {"x": 509, "y": 444},
-        "Zerind": {"x": 108, "y": 531}
-      },
-      "edges": [
-        {"from": "Arad", "to": "Zerind", "distance": 75},
-        {"from": "Arad", "to": "Sibiu", "distance": 140},
-        {"from": "Arad", "to": "Timisoara", "distance": 118},
-        {"from": "Bucharest", "to": "Urziceni", "distance": 85},
-        {"from": "Bucharest", "to": "Pitesti", "distance": 101},
-        {"from": "Bucharest", "to": "Giurgiu", "distance": 90},
-        {"from": "Bucharest", "to": "Fagaras", "distance": 211},
-        {"from": "Craiova", "to": "Drobeta", "distance": 120},
-        {"from": "Craiova", "to": "Rimnicu", "distance": 146},
-        {"from": "Craiova", "to": "Pitesti", "distance": 138},
-        {"from": "Drobeta", "to": "Mehadia", "distance": 75},
-        {"from": "Eforie", "to": "Hirsova", "distance": 86},
-        {"from": "Fagaras", "to": "Sibiu", "distance": 99},
-        {"from": "Hirsova", "to": "Urziceni", "distance": 98},
-        {"from": "Iasi", "to": "Vaslui", "distance": 92},
-        {"from": "Iasi", "to": "Neamt", "distance": 87},
-        {"from": "Lugoj", "to": "Timisoara", "distance": 111},
-        {"from": "Lugoj", "to": "Mehadia", "distance": 70},
-        {"from": "Oradea", "to": "Zerind", "distance": 71},
-        {"from": "Oradea", "to": "Sibiu", "distance": 151},
-        {"from": "Pitesti", "to": "Rimnicu", "distance": 97},
-        {"from": "Rimnicu", "to": "Sibiu", "distance": 80},
-        {"from": "Urziceni", "to": "Vaslui", "distance": 142}
-      ]
-    }
 
     class Problem:
         """The abstract class for a formal problem. You should subclass
@@ -350,6 +310,8 @@
         return graph
 
     # A node in the graph
+    # child node method maps a current state and an action (move) to a result
+    # The next node is the next state based on the result and its parent is the current node
     class Node:
         def __init__(self, state, parent=None, action=None, path_cost=0):
             """Create a search tree Node, derived from a parent by an action."""
@@ -432,7 +394,11 @@
                   return self.eval(node)
           raise KeyError(str(key) + " is not in the frontier")
 
-    def best_first_graph_search(problem, f, display=False):
+
+    iterations = []
+
+
+    def best_first_graph_search(problem, f):
         node = Node(problem.initial)
         frontier = PriorityQueue('min', f)
         frontier.append(node)
@@ -440,10 +406,9 @@
         while frontier:
             node = frontier.pop()
             if problem.goal_test(node.state):
-                if display:
-                    print(len(explored), "paths have been expanded and", len(frontier), "paths remain in the frontier")
                 return node
             explored.add(node.state)
+            iterations.append({'frontier': list([s.state for s in frontier]), 'explored': list(explored)})
             for child in node.expand(problem):
                 if child.state not in explored and child not in frontier:
                     frontier.append(child)
@@ -453,16 +418,18 @@
                         frontier.append(child)
         return None
 
-    def astar_search(problem, h=None, display=False):
+    def astar_search(problem, h=None):
         """A* search is best-first graph search with f(n) = g(n)+h(n).
         You need to specify the h function when you call astar_search, or
         else in your Problem subclass."""
-        return best_first_graph_search(problem, lambda n: n.path_cost + problem.h(n), display)
+        return best_first_graph_search(problem, lambda n: n.path_cost + problem.h(n))
 
     # Solve the problem
     graphToSearch = load_graph_from_json('data/graph_search.json')
     graphProblemToSolve = GraphProblem('Arad', 'Bucharest', graphToSearch)
     searchResult = astar_search(graphProblemToSolve).path()
-    print(json.dumps([s.state for s in searchResult]))
+
+    # serialize results to json
+    print(json.dumps(iterations))
   </script>
 </notebook>
