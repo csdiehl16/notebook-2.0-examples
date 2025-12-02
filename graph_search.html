@@ -15,21 +15,34 @@
 
     First we load some data that we will display in javascript.
   </script>
-  <script id="8" type="module" pinned="">
-    const graph = await FileAttachment('data/graph_search.json').json()
+  <script id="8" type="module">
+    const graph = await FileAttachment(`data/${fileSelect}`).json()
 
     display(graph)
-  </script>
-  <script id="18" type="module" pinned="">
-    const stepSlider = view(Inputs.range([0, graphSolution.length -1], {step: 1, value: 0, label: "Search step"}));
   </script>
   <script id="16" type="text/markdown">
     Using D3, we can show the results of the graph search.
   </script>
-  <script id="12" type="module" pinned="">
+  <script id="19" type="module">
+    const fileSelect = view(Inputs.select(
+      ["graph_search.json", "graph_search_complex.json"],
+      {
+        label: "Choose graph file:",
+        value: "graph_search.json"
+      }
+    ));
+  </script>
+  <script id="21" type="text/x-typescript">
+    const stepSlider = view(Inputs.range([0, graphSolution.length -1], {step: 1, value: 0, label: "Search step"}));
+  </script>
+  <script id="12" type="module">
     // Create an SVG visualization of the graph
     const height = 600;
     const padding = 40;
+    const frontierColor = '#69b3a2'
+    const pathColor = "#BB342F"
+    const yellow = "#DDA448"
+    const purple = '#8D6A9F'
 
     const current = graphSolution[stepSlider]
 
@@ -54,7 +67,7 @@
       distance: edge.distance
     }));
 
-    const isOnPath = (link) => current.explored.includes(link.source) && current.explored.includes(link.target)
+    const isOnPath = (link) => current.bestPath.includes(link.source) && current.bestPath.includes(link.target)
     const isOnFrontier = (link) => (current.frontier.includes(link.target) && current.explored.includes(link.source)) || (current.frontier.includes(link.source) && current.explored.includes(link.target))
 
     // Create links (edges)
@@ -66,8 +79,9 @@
       .attr("y1", d => nodes.find(n => n.id === d.source).y)
       .attr("x2", d => nodes.find(n => n.id === d.target).x)
       .attr("y2", d => nodes.find(n => n.id === d.target).y)
-      .attr("stroke",  d => isOnPath(d) ? 'red' : isOnFrontier(d) ? "orange" : "#999")
-      .attr("stroke-width", d => isOnPath(d) || isOnFrontier ? 3.0 : 1.5);
+      .attr("stroke",  d => isOnPath(d) ? pathColor : isOnFrontier(d) ? frontierColor : "#999")
+      .attr("stroke-width", d => isOnPath(d) ? 5 : isOnFrontier ? 3.0 : 1)
+    .attr('stroke-dasharray', d => isOnPath(d) || isOnFrontier(d) ? '' : '4 2')
 
     // Add distance labels on edges
     svg.append("g")
@@ -98,10 +112,10 @@
       .attr("cx", d => d.x)
       .attr("cy", d => d.y)
       .attr("r", 8)
-      .attr("fill", d => current.explored.includes(d.id) ? 'red' :
-        current.frontier.includes(d.id) ? 'darksalmon' :
-        "#69b3a2")
-      .attr("stroke", "#333")
+      .attr("fill", d => current.bestPath.includes(d.id) ? pathColor : current.explored.includes(d.id) ? purple :
+        current.frontier.includes(d.id) ? frontierColor :
+        "#ccc")
+      .attr("stroke", "#fff")
       .attr("stroke-width", 2);
 
     // Add node labels
@@ -115,6 +129,10 @@
       .attr("font-size", "12px")
       .attr("font-weight", "bold")
       .attr("fill", "#333")
+      .attr('stroke', '#fff')
+      .attr('stroke-width', 2)
+      .attr('paint-order', 'stroke fill')
+      .attr('font-family', 'sans-serif')
       .text(d => d.id);
 
     display(svg.node());
@@ -405,10 +423,11 @@
         explored = set()
         while frontier:
             node = frontier.pop()
+
             if problem.goal_test(node.state):
+                iterations.append({'frontier': list([s.state for s in frontier]), 'explored': list(explored), 'bestPath': [s.state for s in node.path()]})
                 return node
             explored.add(node.state)
-            iterations.append({'frontier': list([s.state for s in frontier]), 'explored': list(explored)})
             for child in node.expand(problem):
                 if child.state not in explored and child not in frontier:
                     frontier.append(child)
@@ -416,6 +435,8 @@
                     if f(child) < frontier[child]:
                         del frontier[child]
                         frontier.append(child)
+
+            iterations.append({'frontier': list([s.state for s in frontier]), 'explored': list(explored), 'bestPath': [s.state for s in node.path()]})
         return None
 
     def astar_search(problem, h=None):
@@ -425,8 +446,8 @@
         return best_first_graph_search(problem, lambda n: n.path_cost + problem.h(n))
 
     # Solve the problem
-    graphToSearch = load_graph_from_json('data/graph_search.json')
-    graphProblemToSolve = GraphProblem('Arad', 'Bucharest', graphToSearch)
+    graphToSearch = load_graph_from_json('data/graph_search_complex.json')
+    graphProblemToSolve = GraphProblem('London', 'Budapest', graphToSearch)
     searchResult = astar_search(graphProblemToSolve).path()
 
     # serialize results to json
