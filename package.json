@@ -3,6 +3,9 @@
     "preview": "notebooks preview --root docs",
     "build": "notebooks build --root docs -- docs/*.html"
   },
+  "files": [
+    "dist"
+  ],
   "dependencies": {
     "@observablehq/notebook-kit": "^1.5.0"
   }
