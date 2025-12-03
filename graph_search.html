@@ -15,9 +15,6 @@
 
     First we load some data that we will display in javascript.
   </script>
-  <script id="22" type="text/x-typescript" pinned="">
-    Math.sqrt(Math.pow((530 - 420), 2) + Math.pow((460 - 620), 2))
-  </script>
   <script id="8" type="module">
     const graph = await FileAttachment(`data/${fileSelect}`).json()
 
@@ -28,7 +25,7 @@
   </script>
   <script id="19" type="module">
     const fileSelect = view(Inputs.select(
-      ["graph_search_complex.json", "graph_search_complex.json"],
+      ["graph_search_complex.json", "graph_search.json", "graph_space_station.json"],
       {
         label: "Choose graph file:",
         value: "graph_search.json"
@@ -38,15 +35,15 @@
   <script id="21" type="text/x-typescript">
     const stepSlider = view(Inputs.range([0, graphSolution.length -1], {step: 1, value: 0, label: "Search step"}));
   </script>
-  <script id="12" type="module" pinned="">
+  <script id="12" type="module">
     // Create an SVG visualization of the graph
-    const height = 600;
+    const height = 800;
     const padding = 40;
     const frontierColor = '#69b3a2'
     const pathColor = "#BB342F"
     const yellow = "#DDA448"
     const purple = '#8D6A9F'
-    const goal = 'Budapest'
+    const goal = graph.goal
 
     const pathCost = (nodes, graph) => {
       let total = 0;
@@ -337,7 +334,7 @@
                 locations[node_name] = (coords["x"], coords["y"])
             graph.locations = locations
 
-        return graph
+        return GraphProblem(data['start'], data['goal'], graph)
 
     # A node in the graph
     # child node method maps a current state and an action (move) to a result
@@ -466,8 +463,7 @@
         return best_first_graph_search(problem, lambda n: n.path_cost + problem.h(n))
 
     # Solve the problem
-    graphToSearch = load_graph_from_json('data/graph_search_complex.json')
-    graphProblemToSolve = GraphProblem('London', 'Budapest', graphToSearch)
+    graphProblemToSolve = load_graph_from_json('data/graph_search_complex.json')
     searchResult = astar_search(graphProblemToSolve).path()
 
     # serialize results to json

@@ -1,4 +1,6 @@
 {
+  "start": "London",
+  "goal": "Budapest",
   "nodes": {
     "London": { "x": 250, "y": 520 },
     "Paris": { "x": 300, "y": 480 },

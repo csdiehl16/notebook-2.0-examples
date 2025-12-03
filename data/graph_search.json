@@ -1,4 +1,6 @@
 {
+  "start": "Arad",
+  "goal": "Bucharest",
   "nodes": {
     "Arad": { "x": 91, "y": 492 },
     "Bucharest": { "x": 400, "y": 327 },
