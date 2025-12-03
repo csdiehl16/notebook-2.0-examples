@@ -1,5 +1,5 @@
 <!doctype html>
-<notebook theme="glacier">
+<notebook theme="air">
   <title>A* Search in Python</title>
   <script id="1" type="text/markdown">
     # A* Search in Python
@@ -9,8 +9,12 @@
 
     Imagine you are dropped in a random city, with a 3 roads leading out of it. Each road has a sign showing how far it is to the next town. You know what city you want to end up in, and approximately where it is on a map. But you don’t know anything about the road network in between.
 
-    Naturally, what you would do is use a combination of how expensive it is to drive down one road, and a heuristic, or educated guess, about how close that will get you to the final goal. Your best guess would probably be the Euclidean (straight line) distance from that town to the final goal city.
-
+    Naturally, what you would do is use a combination of how expensive (gas, time) it is to drive down one road, and a heuristic, or educated guess, about how close that will get you to the final goal. First you add up the cost of driving to the next node (`g(n)`). Then to take a guess at the unknown part of the journey, you draw a straight line (Euclidean distance) from that town to the final goal city `(h(n))`.
+  </script>
+  <script id="24" type="application/x-tex">
+    f(n) = g(n) + h(n)
+  </script>
+  <script id="25" type="text/markdown">
     The python code is based heavily on the public examples of [“AI: A Modern Approach” here](https://github.com/aimacode)
 
     First we load some data that we will display in javascript.
@@ -21,7 +25,16 @@
     display(graph)
   </script>
   <script id="16" type="text/markdown">
-    Using D3, we can show the results of the graph search.
+    Using D3, we can show the results of the graph search. Move the slider to progress to the next iteration.
+
+    The search keeps a list of cities to check next, ordered by the best guess at the total cost. We check the top item in the list, and expand out all the roads leading from that to the next nodes. All these expanded nodes are on the “frontier.”
+
+    Next, we <span style="background-color: #8D6A9F;color:#fff; padding: 2px 4px; border-radius: 4px;">explore</span> the node on <span style="background-color: #69b3a2; padding: 2px 4px; border-radius: 4px;">the frontier</span>  with the lowest cost, and repeat until we find the <span style="background-color: #BB342F; color: #fff; padding: 2px 4px; border-radius: 4px;">best path</span>
+
+
+
+
+
   </script>
   <script id="19" type="module">
     const fileSelect = view(Inputs.select(
@@ -154,6 +167,17 @@
     ### Notebook 2.0 quirks
 
     We’re returning the search path as a string using Python’s `print` function. This is equivalent to using `display` to show the results of a JS cell. First we dump the result to JSON to put it in double quotes so it can be parsed in JS.
+  </script>
+  <script id="22" type="application/x-tex">
+    f(n) = g(n) + h(n)
+  </script>
+  <script id="23" type="text/markdown">
+    Where:
+    - $f(n)$ is the total estimated cost of the path through node $n$
+    - $g(n)$ is the actual cost from the start node to node $n$
+    - $h(n)$ is the heuristic estimate of the cost from node $n$ to the goal (Euclidean distance)
+
+    The A* algorithm selects the node with the lowest $f(n)$ value to explore next.
   </script>
   <script id="2" type="text/x-python" pinned="" output="graphSolution" format="json">
     import json
