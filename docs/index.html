@@ -16,7 +16,7 @@
     First we load some data that we will display in javascript.
   </script>
   <script id="8" type="module">
-    const graph = await FileAttachment(`data/${fileSelect}`).json()
+    const graph = await FileAttachment(`./data/${fileSelect}`).json()
 
     display(graph)
   </script>
@@ -28,7 +28,7 @@
       ["graph_search_complex.json", "graph_search.json", "graph_space_station.json"],
       {
         label: "Choose graph file:",
-        value: "graph_search.json"
+        value: "graph_search_complex.json"
       }
     ));
   </script>
@@ -463,7 +463,7 @@
         return best_first_graph_search(problem, lambda n: n.path_cost + problem.h(n))
 
     # Solve the problem
-    graphProblemToSolve = load_graph_from_json('data/graph_search_complex.json')
+    graphProblemToSolve = load_graph_from_json('./data/graph_search_complex.json')
     searchResult = astar_search(graphProblemToSolve).path()
 
     # serialize results to json

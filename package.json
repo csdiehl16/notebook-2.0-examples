@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "preview": "notebooks preview --root docs",
+    "build": "notebooks build --root docs -- docs/*.html"
+  },
+  "dependencies": {
+    "@observablehq/notebook-kit": "^1.5.0"
+  }
+}
