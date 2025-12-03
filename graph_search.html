@@ -15,6 +15,9 @@
 
     First we load some data that we will display in javascript.
   </script>
+  <script id="22" type="text/x-typescript" pinned="">
+    Math.sqrt(Math.pow((530 - 420), 2) + Math.pow((460 - 620), 2))
+  </script>
   <script id="8" type="module">
     const graph = await FileAttachment(`data/${fileSelect}`).json()
 
@@ -25,7 +28,7 @@
   </script>
   <script id="19" type="module">
     const fileSelect = view(Inputs.select(
-      ["graph_search.json", "graph_search_complex.json"],
+      ["graph_search_complex.json", "graph_search_complex.json"],
       {
         label: "Choose graph file:",
         value: "graph_search.json"
@@ -69,7 +72,9 @@
     const nodes = Object.entries(graph.nodes).map(([name, coords]) => ({
       id: name,
       x: xScale(coords.x),
-      y: yScale(coords.y)
+      y: yScale(coords.y),
+      cx: coords.x,
+      cy: coords.y
     }));
 
     const links = graph.edges.map(edge => ({
@@ -112,6 +117,10 @@
       .attr("stroke-width", 2);
 
     const lastNode = (d) => current.bestPath[current.bestPath.length - 1] === d.id
+    const distToGoal = (d, goal) => {
+      const {x,y} = graph.nodes[goal]
+      return Math.round(Math.sqrt(Math.pow((x - d.cx), 2) + Math.pow((y - d.cy),2)))
+    }
 
     // Add node labels
     svg.append("g")
@@ -123,7 +132,7 @@
       .attr("text-anchor", "middle")
       .attr("font-size", "12px")
       .attr("font-weight", "bold")
-      .attr("fill",d => lastNode(d) ? pathColor : current.frontier.includes(d.id) ? frontierColor :  "#333")
+      .attr("fill",d => lastNode(d) ? pathColor : d.id === current.frontier[0] ? '#333' : current.frontier.includes(d.id) ? frontierColor :  "#333")
       .attr('stroke', '#fff')
       .attr('stroke-width', 2)
       .attr('paint-order', 'stroke fill')
@@ -133,7 +142,8 @@
         if (lastNode(d)) d3.select(this).raise()
       })
       .text(d => {
-        if (lastNode(d)) return `${d.id} - ${pathCost(current.bestPath, graph)}`
+        if (lastNode(d)) return `${d.id} (${pathCost(current.bestPath, graph)} + ${distToGoal(d, goal)} = ${pathCost(current.bestPath, graph) + distToGoal(d, goal)})`
+        if (current.frontier.includes(d.id)) return `${d.id} - ${current.frontierCost[current.frontier.indexOf(d.id)]}`
         return d.id
       });
 
@@ -417,6 +427,13 @@
 
     iterations = []
 
+    def trackProgress(frontier, explored, node, f):
+      return iterations.append({
+        'frontier': list([s.state for s in frontier]),
+        'frontierCost': list([f(s) for s in frontier]),
+        'explored': list(explored),
+        'bestPath': [s.state for s in node.path()]})
+
 
     def best_first_graph_search(problem, f):
         node = Node(problem.initial)
@@ -427,7 +444,7 @@
             node = frontier.pop()
 
             if problem.goal_test(node.state):
-                iterations.append({'frontier': list([s.state for s in frontier]), 'explored': list(explored), 'bestPath': [s.state for s in node.path()]})
+                trackProgress(frontier, explored, node, f)
                 return node
             explored.add(node.state)
             for child in node.expand(problem):
@@ -438,7 +455,8 @@
                         del frontier[child]
                         frontier.append(child)
 
-            iterations.append({'frontier': list([s.state for s in frontier]), 'explored': list(explored), 'bestPath': [s.state for s in node.path()]})
+            trackProgress(frontier, explored, node, f)
+
         return None
 
     def astar_search(problem, h=None):
