@@ -1,2 +1,3 @@
 .observable/cache
 node_modules
+docs/.observable/dist
