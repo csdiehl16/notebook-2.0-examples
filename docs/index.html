@@ -407,6 +407,9 @@
       def pop(self):
         return self.q.pop(0)
 
+      def peek(self):
+        return self.q[0]
+
       def is_empty(self):
         return len(self.q) == 0
 
@@ -469,11 +472,77 @@
         else in your Problem subclass."""
         return best_first_graph_search(problem, lambda n: n.path_cost + problem.h(n))
 
+
+    ## Bidirectional search
+    # search from both the start and goal nodes
+    def bidirectional_astar_search(problem, h1=None, h2=None):
+        node_f, node_b = Node(problem.initial), Node(problem.goal)
+        frontier_f, frontier_b = PriorityQueue('min', h1), PriorityQueue('min', h2)
+        frontier_f.append(node_f)
+        frontier_b.append(node_b)
+        explored_f, explored_b = {}, {}
+        mu = float('inf')
+        best_connection = None
+
+        def check_connection(node, explored_other, direction):
+            """Check if node connects to the other search."""
+            nonlocal mu, best_connection
+            if node.state in explored_other:
+                other_node = explored_other[node.state]
+                total_cost = node.path_cost + other_node.path_cost
+                if total_cost < mu:
+                    mu = total_cost
+                    if direction == 'forward':
+                        best_connection = (node, other_node)
+                    else:
+                        best_connection = (other_node, node)
+
+        def explore(problem, node, f, frontier, explored, explored_other, direction):
+            explored[node.state] = node
+            check_connection(node, explored_other, direction)
+            for child in node.expand(problem):
+                check_connection(child, explored_other, direction)
+                if child.state not in explored and child not in frontier:
+                    frontier.append(child)
+                elif child in frontier:
+                    if f(child) < frontier[child]:
+                        del frontier[child]
+                        frontier.append(child)
+
+        while frontier_f and frontier_b:
+            node_f_cost = h1(frontier_f.peek())
+            node_b_cost = h2(frontier_b.peek())
+            C = min(node_f_cost, node_b_cost)
+
+            # Stopping condition: best path is shorter than best incomplete estimated path
+            if mu <= C:
+                return best_connection
+
+            # Expand from the direction with smaller minimum f-value
+            if C == node_f_cost:
+                node_f = frontier_f.pop()
+                explore(problem, node_f, h1, frontier_f, explored_f, explored_b, 'forward')
+            else:
+                node_b = frontier_b.pop()
+                explore(problem, node_b, h2, frontier_b, explored_b, explored_f, 'backward')
+
+        return best_connection
+
+
+    def bd_search(problem):
+      f = lambda n: n.path_cost + problem.h(n)
+      return bidirectional_astar_search(problem, f, f)
+
+
+
     # Solve the problem
     graphProblemToSolve = load_graph_from_json('./data/graph_search_complex.json')
     searchResult = astar_search(graphProblemToSolve).path()
 
+    # bd = bd_search(graphProblemToSolve)
+
     # serialize results to json
     print(json.dumps(iterations))
+
   </script>
 </notebook>
