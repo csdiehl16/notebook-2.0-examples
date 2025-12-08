@@ -7,6 +7,8 @@
   <script id="2" type="module" pinned="">
     import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.181.2/+esm';
 
+    import { OrbitControls }  from 'https://cdn.jsdelivr.net/npm/three@0.181.2/examples/jsm/controls/OrbitControls/+esm';
+
     // Create container
     const height = 600
     // Scene setup
@@ -57,6 +59,10 @@
     // Add grid
     const gridHelper = new THREE.GridHelper(40, 40, 0x888888, 0xcccccc);
     scene.add(gridHelper);
+
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+
 
     // Animation loop
     function animate() {
