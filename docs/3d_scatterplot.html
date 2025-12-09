@@ -3,11 +3,15 @@
   <title>K-means clustering with 3D scatterplot</title>
   <script id="1" type="text/markdown">
     # K-means clustering with 3D scatterplot
+
+    This notebook demonstrates k-means clustering using a python data loader, with a 3D visualization of the resulting clusters in Three.js. It shows a sample dataset of wines clustered by attributes such as alcohol content and pH.
   </script>
   <script id="2" type="module" pinned="">
     import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.181.2/+esm';
-
     import { OrbitControls }  from 'https://cdn.jsdelivr.net/npm/three@0.181.2/examples/jsm/controls/OrbitControls/+esm';
+
+    const data = wine_labeled
+    const X = "fixed acidity", Y = "pH", Z = 'alcohol'
 
     // Create container
     const height = 600
@@ -15,12 +19,11 @@
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xf0f0f0);
 
-    const X = "culmen_depth_mm", Y = "culmen_length_mm", Z = "body_mass_g"
-
     // create scales
     const x = d3.scaleLinear(d3.extent(data, d => d[X]), [0,20])
     const y = d3.scaleLinear(d3.extent(data, d => d[Y]), [0,20])
     const z = d3.scaleLinear(d3.extent(data, d => d[Z]), [0,20])
+    const c = d3.scaleOrdinal(new Set(data.map(d => d.cluster)), ['#121212', 'orange', 'steelblue'])
 
     // Camera setup
     const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000);
@@ -35,7 +38,7 @@
     const numPoints = 100;
     const points = data.map(d => {
       return {
-        x: x(d[X]), y: y(d[Y]), z: z(d[Z]), color: '#000000'
+        x: x(d[X]), y: y(d[Y]), z: z(d[Z]), color: c(d.cluster)
       }
     })
 
@@ -83,26 +86,24 @@
 
     display(renderer.domElement)
   </script>
-  <script id="3" type="text/x-typescript" pinned="">
-    const data = penguins
-    display(Inputs.table(data.slice(0,10)))
+  <script id="9" type="text/x-typescript" pinned="">
+    Inputs.table(wine_labeled)
   </script>
-  <script id="4" type="text/x-python" pinned="" format="json">
+  <script id="4" type="text/x-python" pinned="" output="wine_labeled" format="json">
     import numpy as np
     from scipy.cluster.vq import kmeans, vq, whiten
+    import pandas as pd
+    import json
 
-    # 1. Generate sample data
-    # Let's create some synthetic data with 3 distinct clusters
-    data = np.vstack((
-        np.random.rand(100, 2) * 0.5 + np.array([0, 0]),
-        np.random.rand(100, 2) * 0.5 + np.array([2, 2]),
-        np.random.rand(100, 2) * 0.5 + np.array([0, 2])
-    ))
+    # Load the WineQT.csv file from the data folder
+    df = pd.read_csv('data/WineQT.csv')
+
+    feat = df[['alcohol', 'pH', 'fixed acidity']]
 
     # 2. Whiten the data
     # Whitening scales each feature to have zero mean and unit variance.
     # This is often recommended before applying K-Means.
-    whitened_data = whiten(data)
+    whitened_data = whiten(feat)
 
     # 3. Perform K-Means clustering
     # We specify the number of clusters (k) and get the centroids (codebook)
@@ -114,5 +115,13 @@
     # vq assigns each observation to its nearest centroid, returning the cluster labels
     # and the distances to those centroids.
     cluster_labels, distances = vq(whitened_data, codebook)
+
+    # 5. Attach cluster labels and distances to the original dataframe
+    df['cluster'] = cluster_labels
+    df['distance_to_centroid'] = distances
+
+    # Convert to JSON format for output
+    result = df.to_dict('records')
+    print(json.dumps(result))
   </script>
 </notebook>
