@@ -1,548 +1,131 @@
 <!doctype html>
 <notebook theme="air">
-  <title>A* Search in Python</title>
+  <title>Observable Notebooks 2.0 - Example Projects</title>
   <script id="1" type="text/markdown">
-    # A* Search in Python
-  </script>
-  <script id="13" type="text/markdown">
-    This notebook demonstrates using the A* algorithm for finding the shortest path to a goal destination on a graph. We <span style="background-color: #8D6A9F;color:#fff; padding: 2px 4px; border-radius: 4px;">explore</span> the node on <span style="background-color: #69b3a2; padding: 2px 4px; border-radius: 4px;">the frontier</span>  with the lowest cost, and repeat until we find the <span style="background-color: #BB342F; color: #fff; padding: 2px 4px; border-radius: 4px;">best path</span>
-  </script>
-  <script id="21" type="text/x-typescript">
-    const stepSlider = view(Inputs.range([0, graphSolution.length -1], {step: 1, value: 0, label: "Search step"}));
-  </script>
-  <script id="12" type="module">
-    // Create an SVG visualization of the graph
-    const height = 800;
-    const padding = 40;
-    const frontierColor = '#69b3a2'
-    const pathColor = "#BB342F"
-    const yellow = "#DDA448"
-    const purple = '#8D6A9F'
-    const goal = graph.goal
+    # Observable Notebooks 2.0 - Example Projects
 
-    const pathCost = (nodes, graph) => {
-      let total = 0;
-      for (let i = 0; i < nodes.length - 1; i++) {
-        const from = nodes[i], to = nodes[i + 1]
-        const edge = graph.edges.find(e => e.from === from && e.to === to)
-        total += edge?.distance || 0
+    A collection of interactive notebooks demonstrating data visualization and algorithm implementations using Observable Notebooks 2.0 with Python and JavaScript.
+  </script>
+  <script id="2" type="module">
+    const projects = [
+      {
+        title: "K-means clustering with 3D scatterplot",
+        description: "This notebook demonstrates k-means clustering using a Python data loader, with a 3D visualization of the resulting clusters in Three.js. It shows a sample dataset of wines clustered by attributes such as alcohol content and pH.",
+        url: "3d_scatterplot.html",
+        image: "scatterplot.png"
+      },
+      {
+        title: "A* Search in Python",
+        description: "This notebook demonstrates using the A* algorithm for finding the shortest path to a goal destination on a graph. We explore the node on the frontier with the lowest cost, and repeat until we find the best path.",
+        url: "graph_search.html",
+        image: "graph.png"
       }
-      return total;
-    }
+    ];
 
-    const current = graphSolution[stepSlider]
+    const container = display(document.createElement("div"));
+    container.style.cssText = `
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 2rem;
+      margin: 2rem 0;
+    `;
 
-    const svg = d3.create("svg")
-      .attr("width", width)
-      .attr("height", height)
-      .attr("viewBox", [0, 0, width, height]);
+    projects.forEach(project => {
+      const card = document.createElement("div");
+      card.style.cssText = `
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        overflow: hidden;
+        background: white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+        display: flex;
+        flex-direction: column;
+      `;
 
-    const yScale = d3.scaleLinear(d3.extent(Object.values(graph.nodes), d => d.y), [padding, height - padding])
-    const xScale = d3.scaleLinear(d3.extent(Object.values(graph.nodes), d => d.x), [padding, width - padding])
-
-    // Extract nodes and edges from the graph data
-    const nodes = Object.entries(graph.nodes).map(([name, coords]) => ({
-      id: name,
-      x: xScale(coords.x),
-      y: yScale(coords.y),
-      cx: coords.x,
-      cy: coords.y
-    }));
-
-    const links = graph.edges.map(edge => ({
-      source: edge.from,
-      target: edge.to,
-      distance: edge.distance
-    }));
-
-    const isOnPath = (link) => current.bestPath.includes(link.source) && current.bestPath.includes(link.target)
-    const isOnFrontier = (link) => (current.frontier.includes(link.target) && current.explored.includes(link.source)) || (current.frontier.includes(link.source) && current.explored.includes(link.target))
-    const isExploredLink = (link) => (current.explored.includes(link.target) && current.explored.includes(link.source)) || (current.explored.includes(link.source) && current.explored.includes(link.target))
-
-    const visitedEdges = []
-
-    // Create links (edges)
-    const link = svg.append("g")
-      .selectAll("line")
-      .data(links)
-      .join("line")
-      .attr("x1", d => nodes.find(n => n.id === d.source).x)
-      .attr("y1", d => nodes.find(n => n.id === d.source).y)
-      .attr("x2", d => nodes.find(n => n.id === d.target).x)
-      .attr("y2", d => nodes.find(n => n.id === d.target).y)
-      .attr("stroke",  d => isOnPath(d) ? pathColor : isExploredLink(d) ? purple : isOnFrontier(d) ? frontierColor : "#999")
-       .attr("opacity",  d => isOnPath(d) || isExploredLink(d) || isOnFrontier(d) ? 1 : .3)
-      .attr("stroke-width", d => isOnPath(d) ? 5 : isOnFrontier ? 3.0 : 1)
-    .attr('stroke-dasharray', d => isOnPath(d) || isOnFrontier(d) ? '' : '4 2')
-
-    // Create nodes
-    const node = svg.append("g")
-      .selectAll("circle")
-      .data(nodes)
-      .join("circle")
-      .attr("cx", d => d.x)
-      .attr("cy", d => d.y)
-      .attr("fill", d => current.bestPath.includes(d.id) ? pathColor : current.explored.includes(d.id) ? purple :
-        current.frontier.includes(d.id) ? frontierColor :
-        "#ccc")
-       .attr("r", d => current.bestPath.includes(d.id) || current.explored.includes(d.id) ||
-        current.frontier.includes(d.id) ? 8 : 6)
-      .attr("stroke", "#fff")
-      .attr("stroke-width", 2);
-
-    const lastNode = (d) => current.bestPath[current.bestPath.length - 1] === d.id
-    const distToGoal = (d, goal) => {
-      const {x,y} = graph.nodes[goal]
-      return Math.round(Math.sqrt(Math.pow((x - d.cx), 2) + Math.pow((y - d.cy),2)))
-    }
-
-    // Add node labels
-    svg.append("g")
-      .selectAll("text")
-      .data(nodes)
-      .join("text")
-      .attr("x", d => d.x)
-      .attr("y", d => d.y - 12)
-      .attr("text-anchor", "middle")
-      .attr("font-size", "12px")
-      .attr("font-weight", "bold")
-      .attr("fill",d => lastNode(d) ? pathColor : d.id === current.frontier[0] ? '#333' : current.frontier.includes(d.id) ? frontierColor :  "#333")
-      .attr('stroke', '#fff')
-      .attr('stroke-width', 2)
-      .attr('paint-order', 'stroke fill')
-      .attr('font-family', 'sans-serif')
-      .attr('opacity', d => current.bestPath.includes(d.id) || current.frontier.includes(d.id) || d.id === goal  ? 1 :0 )
-      .each(function(d) {
-        if (lastNode(d)) d3.select(this).raise()
-      })
-      .text(d => {
-        if (lastNode(d)) return `${d.id} (${pathCost(current.bestPath, graph)} + ${distToGoal(d, goal)} = ${pathCost(current.bestPath, graph) + distToGoal(d, goal)})`
-        if (current.frontier.includes(d.id)) return `${d.id} - ${current.frontierCost[current.frontier.indexOf(d.id)]}`
-        return d.id
+      card.addEventListener("mouseenter", () => {
+        card.style.transform = "translateY(-4px)";
+        card.style.boxShadow = "0 4px 16px rgba(0,0,0,0.15)";
       });
 
-    display(svg.node());
-  </script>
-  <script id="26" type="text/markdown">
-    ## How it works
-
-    Imagine you are dropped in a random city, with a 3 roads leading out of it. Each road has a sign showing how far it is to the next town. You know what city you want to end up in, and approximately where it is on a map. But you don’t know anything about the road network in between.
-
-    Naturally, what you would do is use a combination of how expensive (gas, time) it is to drive down one road, and a heuristic, or educated guess, about how close that will get you to the final goal. First you add up the cost of driving to the next node (`g(n)`). Then to take a guess at the unknown part of the journey, you draw a straight line (Euclidean distance) from that town to the final goal city `(h(n))`.
-  </script>
-  <script id="24" type="application/x-tex">
-    f(n) = g(n) + h(n)
-  </script>
-  <script id="25" type="text/markdown">
-    The python code is based heavily on the public examples of [“AI: A Modern Approach” here](https://github.com/aimacode)
-
-    First we load some data that we will display in javascript.
-  </script>
-  <script id="8" type="module">
-    const graph = await FileAttachment(`./data/graph_search_complex.json`).json()
-
-    display(graph)
-  </script>
-  <script id="16" type="text/markdown">
-    Using D3, we can show the results of the graph search. Move the slider to progress to the next iteration.
-
-    The search keeps a list of cities to check next, ordered by the best guess at the total cost. We check the top item in the list, and expand out all the roads leading from that to the next nodes. All these expanded nodes are on the “frontier.”
-
-
-
-
-
-  </script>
-  <script id="17" type="text/markdown">
-    ## Python implementation
-
-    Below we solve the graph search problem using Python. First we create classes for the graph and nodes. We also create a priority queue. This data structure is used to keep track of nodes on the “frontier” by ordering them by the search heuristic - or how likely they are to lead us to the goal.
-
-    ### Notebook 2.0 quirks
-
-    We’re returning the search path as a string using Python’s `print` function. This is equivalent to using `display` to show the results of a JS cell. First we dump the result to JSON to put it in double quotes so it can be parsed in JS.
-  </script>
-  <script id="2" type="text/x-python" pinned="" output="graphSolution" format="json">
-    import json
-
-    class Problem:
-        """The abstract class for a formal problem. You should subclass
-        this and implement the methods actions and result, and possibly
-        __init__, goal_test, and path_cost. Then you will create instances
-        of your subclass and solve them with the various search functions."""
-
-        def __init__(self, initial, goal=None):
-            """The constructor specifies the initial state, and possibly a goal
-            state, if there is a unique goal. Your subclass's constructor can add
-            other arguments."""
-            self.initial = initial
-            self.goal = goal
-
-        def actions(self, state):
-            """Return the actions that can be executed in the given
-            state. The result would typically be a list, but if there are
-            many actions, consider yielding them one at a time in an
-            iterator, rather than building them all at once."""
-            raise NotImplementedError
-
-        def result(self, state, action):
-            """Return the state that results from executing the given
-            action in the given state. The action must be one of
-            self.actions(state)."""
-            raise NotImplementedError
-
-        def goal_test(self, state):
-            """Return True if the state is a goal. The default method compares the
-            state to self.goal or checks for state in self.goal if it is a
-            list, as specified in the constructor. Override this method if
-            checking against a single self.goal is not enough."""
-            if isinstance(self.goal, list):
-                return state in self.goal
-            else:
-                return state == self.goal
-
-        def path_cost(self, c, state1, action, state2):
-            """Return the cost of a solution path that arrives at state2 from
-            state1 via action, assuming cost c to get up to state1. If the problem
-            is such that the path doesn't matter, this function will only look at
-            state2. If the path does matter, it will consider c and maybe state1
-            and action. The default method costs 1 for every step in the path."""
-            return c + 1
-
-    def distance(A, B):
-      x1,y1 = A
-      x2,y2 = B
-      return ((x1-x2)**2 + (y1-y2)**2)**0.5
-
-    class GraphProblem(Problem):
-        """The problem of searching a graph from one node to another."""
-
-        def __init__(self, initial, goal, graph):
-            super().__init__(initial, goal)
-            self.graph = graph
-
-        def actions(self, A):
-            """The actions at a graph node are just its neighbors."""
-            return list(self.graph.get(A).keys())
-
-        def result(self, state, action):
-            """The result of going to a neighbor is just that neighbor."""
-            return action
-
-        def path_cost(self, cost_so_far, A, action, B):
-            return cost_so_far + (self.graph.get(A, B) or float('inf'))
-
-        def find_min_edge(self):
-            """Find minimum value of edges."""
-            m = float('inf')
-            for d in self.graph.graph_dict.values():
-                local_min = min(d.values())
-                m = min(m, local_min)
-            return m
-
-        def h(self, node):
-            """h function is straight-line distance from a node's state to goal."""
-            locs = getattr(self.graph, 'locations', None)
-            if locs:
-                if type(node) is str:
-                    return int(distance(locs[node], locs[self.goal]))
-                return int(distance(locs[node.state], locs[self.goal]))
-            else:
-                return float('inf')
-
-    class Graph:
-        """A graph connects nodes (vertices) by edges (links). Each edge can also
-        have a length associated with it. The constructor call is something like:
-            g = Graph({'A': {'B': 1, 'C': 2})
-        this makes a graph with 3 nodes, A, B, and C, with an edge of length 1 from
-        A to B,  and an edge of length 2 from A to C. You can also do:
-            g = Graph({'A': {'B': 1, 'C': 2}, directed=False)
-        This makes an undirected graph, so inverse links are also added. The graph
-        stays undirected; if you add more links with g.connect('B', 'C', 3), then
-        inverse link is also added. You can use g.nodes() to get a list of nodes,
-        g.get('A') to get a dict of links out of A, and g.get('A', 'B') to get the
-        length of the link from A to B. 'Lengths' can actually be any object at
-        all, and nodes can be any hashable object."""
-
-        def __init__(self, graph_dict=None, directed=True):
-            self.graph_dict = graph_dict or {}
-            self.directed = directed
-            if not directed:
-                self.make_undirected()
-
-        def make_undirected(self):
-            """Make a digraph into an undirected graph by adding symmetric edges."""
-            for a in list(self.graph_dict.keys()):
-                for (b, dist) in self.graph_dict[a].items():
-                    self.connect1(b, a, dist)
-
-        def connect(self, A, B, distance=1):
-            """Add a link from A and B of given distance, and also add the inverse
-            link if the graph is undirected."""
-            self.connect1(A, B, distance)
-            if not self.directed:
-                self.connect1(B, A, distance)
-
-        def connect1(self, A, B, distance):
-            """Add a link from A to B of given distance, in one direction only."""
-            self.graph_dict.setdefault(A, {})[B] = distance
-
-        def get(self, a, b=None):
-            """Return a link distance or a dict of {node: distance} entries.
-            .get(a,b) returns the distance or None;
-            .get(a) returns a dict of {node: distance} entries, possibly {}."""
-            links = self.graph_dict.setdefault(a, {})
-            if b is None:
-                return links
-            else:
-                return links.get(b)
-
-        def nodes(self):
-            """Return a list of nodes in the graph."""
-            s1 = set([k for k in self.graph_dict.keys()])
-            s2 = set([k2 for v in self.graph_dict.values() for k2, v2 in v.items()])
-            nodes = s1.union(s2)
-            return list(nodes)
-
-    def UndirectedGraph(graph_dict=None):
-        """Build a Graph where every edge (including future ones) goes both ways."""
-        return Graph(graph_dict=graph_dict, directed=False)
-
-    def load_graph_from_json(json_file_path):
-        """Load a graph from JSON data structure.
-        Expected format:
-        {
-            "nodes": {"node_name": {"x": x_coord, "y": y_coord}, ...},
-            "edges": [{"from": "node1", "to": "node2", "distance": dist}, ...]
-        }
-        """
-        # load data from file
-        with open(json_file_path, 'r') as file:
-          data = json.load(file)
-
-        # Create the graph dictionary from edges
-        graph_dict = {}
-        for edge in data["edges"]:
-            from_node = edge["from"]
-            to_node = edge["to"]
-            distance = edge["distance"]
-
-            if from_node not in graph_dict:
-                graph_dict[from_node] = {}
-            graph_dict[from_node][to_node] = distance
-
-        # Create undirected graph
-        graph = UndirectedGraph(graph_dict)
-
-        # Add locations if provided
-        if "nodes" in data:
-            locations = {}
-            for node_name, coords in data["nodes"].items():
-                locations[node_name] = (coords["x"], coords["y"])
-            graph.locations = locations
-
-        return GraphProblem(data['start'], data['goal'], graph)
-
-    # A node in the graph
-    # child node method maps a current state and an action (move) to a result
-    # The next node is the next state based on the result and its parent is the current node
-    class Node:
-        def __init__(self, state, parent=None, action=None, path_cost=0):
-            """Create a search tree Node, derived from a parent by an action."""
-            self.state = state
-            self.parent = parent
-            self.action = action
-            self.path_cost = path_cost
-            self.depth = 0
-            if parent:
-                self.depth = parent.depth + 1
-
-        def __repr__(self):
-            return "<Node {}>".format(self.state)
-
-        def __lt__(self, node):
-            return self.state < node.state
-
-        def expand(self, problem):
-            """List the nodes reachable in one step from this node."""
-            return [self.child_node(problem, action)
-                    for action in problem.actions(self.state)]
-
-        def child_node(self, problem, action):
-            """[Figure 3.10]"""
-            next_state = problem.result(self.state, action)
-            next_node = Node(next_state, self, action, problem.path_cost(self.path_cost, self.state, action, next_state))
-            return next_node
-
-        def solution(self):
-            """Return the sequence of actions to go from the root to this node."""
-            return [node.action for node in self.path()[1:]]
-
-        def path(self):
-            """Return a list of nodes forming the path from the root to this node."""
-            node, path_back = self, []
-            while node:
-                path_back.append(node)
-                node = node.parent
-            return list(reversed(path_back))
-
-        def __eq__(self, other):
-            return isinstance(other, Node) and self.state == other.state
-
-        def __hash__(self):
-            return hash(self.state)
-
-    # Data structure to use for the frontier
-    class PriorityQueue:
-      def __init__(self, order='min', f=lambda x: x):
-        self.q = []
-        self.order = order
-        self.eval = f
-
-      def append(self, node):
-        self.q.append(node)
-        self.q = sorted(self.q, key=lambda x: self.eval(x))
-        return self.q
-
-      def pop(self):
-        return self.q.pop(0)
-
-      def peek(self):
-        return self.q[0]
-
-      def is_empty(self):
-        return len(self.q) == 0
-
-      def __iter__(self):
-        return iter(self.q)
-
-      def __contains__(self, item):
-        return item in self.q
-
-      def __delitem__(self, key):
-        for i, node in enumerate(self.q):
-            if node == key:
-                del self.q[i]
-                break
-
-      def __getitem__(self, key):
-          for node in self.q:
-              if node == key:
-                  return self.eval(node)
-          raise KeyError(str(key) + " is not in the frontier")
-
-
-    iterations = []
-
-    def trackProgress(frontier, explored, node, f):
-      return iterations.append({
-        'frontier': list([s.state for s in frontier]),
-        'frontierCost': list([f(s) for s in frontier]),
-        'explored': list(explored),
-        'bestPath': [s.state for s in node.path()]})
-
-
-    def best_first_graph_search(problem, f):
-        node = Node(problem.initial)
-        frontier = PriorityQueue('min', f)
-        frontier.append(node)
-        explored = set()
-        while frontier:
-            node = frontier.pop()
-
-            if problem.goal_test(node.state):
-                trackProgress(frontier, explored, node, f)
-                return node
-            explored.add(node.state)
-            for child in node.expand(problem):
-                if child.state not in explored and child not in frontier:
-                    frontier.append(child)
-                elif child in frontier:
-                    if f(child) < frontier[child]:
-                        del frontier[child]
-                        frontier.append(child)
-
-            trackProgress(frontier, explored, node, f)
-
-        return None
-
-    def astar_search(problem, h=None):
-        """A* search is best-first graph search with f(n) = g(n)+h(n).
-        You need to specify the h function when you call astar_search, or
-        else in your Problem subclass."""
-        return best_first_graph_search(problem, lambda n: n.path_cost + problem.h(n))
-
-
-    ## Bidirectional search
-    # search from both the start and goal nodes
-    def bidirectional_astar_search(problem, h1=None, h2=None):
-        node_f, node_b = Node(problem.initial), Node(problem.goal)
-        frontier_f, frontier_b = PriorityQueue('min', h1), PriorityQueue('min', h2)
-        frontier_f.append(node_f)
-        frontier_b.append(node_b)
-        explored_f, explored_b = {}, {}
-        mu = float('inf')
-        best_connection = None
-
-        def check_connection(node, explored_other, direction):
-            """Check if node connects to the other search."""
-            nonlocal mu, best_connection
-            if node.state in explored_other:
-                other_node = explored_other[node.state]
-                total_cost = node.path_cost + other_node.path_cost
-                if total_cost < mu:
-                    mu = total_cost
-                    if direction == 'forward':
-                        best_connection = (node, other_node)
-                    else:
-                        best_connection = (other_node, node)
-
-        def explore(problem, node, f, frontier, explored, explored_other, direction):
-            explored[node.state] = node
-            check_connection(node, explored_other, direction)
-            for child in node.expand(problem):
-                check_connection(child, explored_other, direction)
-                if child.state not in explored and child not in frontier:
-                    frontier.append(child)
-                elif child in frontier:
-                    if f(child) < frontier[child]:
-                        del frontier[child]
-                        frontier.append(child)
-
-        while frontier_f and frontier_b:
-            node_f_cost = h1(frontier_f.peek())
-            node_b_cost = h2(frontier_b.peek())
-            C = min(node_f_cost, node_b_cost)
-
-            # Stopping condition: best path is shorter than best incomplete estimated path
-            if mu <= C:
-                return best_connection
-
-            # Expand from the direction with smaller minimum f-value
-            if C == node_f_cost:
-                node_f = frontier_f.pop()
-                explore(problem, node_f, h1, frontier_f, explored_f, explored_b, 'forward')
-            else:
-                node_b = frontier_b.pop()
-                explore(problem, node_b, h2, frontier_b, explored_b, explored_f, 'backward')
-
-        return best_connection
-
-
-    def bd_search(problem):
-      f = lambda n: n.path_cost + problem.h(n)
-      return bidirectional_astar_search(problem, f, f)
-
-
-
-    # Solve the problem
-    graphProblemToSolve = load_graph_from_json('./data/graph_search_complex.json')
-    searchResult = astar_search(graphProblemToSolve).path()
-
-    # bd = bd_search(graphProblemToSolve)
-
-    # serialize results to json
-    print(json.dumps(iterations))
-
+      card.addEventListener("mouseleave", () => {
+        card.style.transform = "translateY(0)";
+        card.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
+      });
+
+      // Preview iframe
+      const preview = document.createElement("div");
+      preview.style.cssText = `
+        width: 100%;
+        height: 250px;
+        background: #f5f5f5;
+        position: relative;
+        overflow: hidden;
+      `;
+
+      const iframe = document.createElement("img");
+      iframe.src = project.image;
+      iframe.style.cssText = `
+        width: 100%;
+        height: 100%;
+        border: none;
+        pointer-events: none;
+        transform: scale(1);
+      `;
+      preview.appendChild(iframe);
+
+      // Content
+      const content = document.createElement("div");
+      content.style.cssText = `
+        padding: 1.5rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      `;
+
+      const title = document.createElement("h3");
+      title.textContent = project.title;
+      title.style.cssText = `
+        margin: 0 0 0.75rem 0;
+        font-size: 1.25rem;
+        color: #333;
+      `;
+
+      const description = document.createElement("p");
+      description.textContent = project.description;
+      description.style.cssText = `
+        margin: 0 0 1rem 0;
+        color: #666;
+        line-height: 1.5;
+        font-size: 0.95rem;
+        flex: 1;
+      `;
+
+      const link = document.createElement("a");
+      link.href = project.url;
+      link.textContent = "View Project →";
+      link.style.cssText = `
+        color: #4285f4;
+        text-decoration: none;
+        font-weight: 500;
+        display: inline-block;
+      `;
+
+      link.addEventListener("mouseenter", () => {
+        link.style.textDecoration = "underline";
+      });
+
+      link.addEventListener("mouseleave", () => {
+        link.style.textDecoration = "none";
+      });
+
+      content.appendChild(title);
+      content.appendChild(description);
+      content.appendChild(link);
+
+      card.appendChild(preview);
+      card.appendChild(content);
+      container.appendChild(card);
+    });
   </script>
 </notebook>
