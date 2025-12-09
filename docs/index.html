@@ -12,13 +12,13 @@
         title: "K-means clustering with 3D scatterplot",
         description: "This notebook demonstrates k-means clustering using a Python data loader, with a 3D visualization of the resulting clusters in Three.js. It shows a sample dataset of wines clustered by attributes such as alcohol content and pH.",
         url: "3d_scatterplot.html",
-        image: "scatterplot.png"
+        image: "./images/scatterplot.webp"
       },
       {
         title: "A* Search in Python",
         description: "This notebook demonstrates using the A* algorithm for finding the shortest path to a goal destination on a graph. We explore the node on the frontier with the lowest cost, and repeat until we find the best path.",
         url: "graph_search.html",
-        image: "graph.png"
+        image: "./images/graph.webp"
       }
     ];
 
@@ -70,7 +70,7 @@
         height: 100%;
         border: none;
         pointer-events: none;
-        transform: scale(1);
+        object-fit: cover;
       `;
       preview.appendChild(iframe);
 
