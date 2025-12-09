@@ -33,8 +33,13 @@ jobs:
           node-version: '20'
       - name: Install dependencies
         run: npm install
+      - name: Clean previous build
+        run: rm -rf ./docs/.observable/dist
       - name: Build project
         run: npm run build
+      - name: Add cache busting
+        run: |
+          echo "Build timestamp: $(date)" > ./docs/.observable/dist/.build-timestamp
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
