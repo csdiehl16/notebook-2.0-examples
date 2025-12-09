@@ -96,7 +96,7 @@
     import json
 
     # Load the WineQT.csv file from the data folder
-    df = pd.read_csv('data/WineQT.csv')
+    df = pd.read_json('data/WineQT.json')
 
     feat = df[['alcohol', 'pH', 'fixed acidity']]
 
