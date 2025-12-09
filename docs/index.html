@@ -7,18 +7,22 @@
     A collection of interactive notebooks demonstrating data visualization and algorithm implementations using Observable Notebooks 2.0 with Python and JavaScript.
   </script>
   <script id="2" type="module">
+    const imageUrl = await FileAttachment("./images/scatterplot.webp").url()
+    const image2Url = await FileAttachment("./images/graph.webp").url()
+
+
     const projects = [
       {
         title: "K-means clustering with 3D scatterplot",
         description: "This notebook demonstrates k-means clustering using a Python data loader, with a 3D visualization of the resulting clusters in Three.js. It shows a sample dataset of wines clustered by attributes such as alcohol content and pH.",
         url: "3d_scatterplot.html",
-        image: "./images/scatterplot.webp"
+        image: imageUrl
       },
       {
         title: "A* Search in Python",
         description: "This notebook demonstrates using the A* algorithm for finding the shortest path to a goal destination on a graph. We explore the node on the frontier with the lowest cost, and repeat until we find the best path.",
         url: "graph_search.html",
-        image: "./images/graph.webp"
+        image: image2Url
       }
     ];
 
