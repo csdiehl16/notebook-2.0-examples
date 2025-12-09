@@ -33,6 +33,12 @@ jobs:
           node-version: '20'
       - name: Install dependencies
         run: npm install
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install Python dependencies
+        run: pip install -r ./docs/requirements.txt
       - name: Clean previous build
         run: rm -rf ./docs/.observable/dist
       - name: Build project
