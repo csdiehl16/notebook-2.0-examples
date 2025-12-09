@@ -1,12 +1,12 @@
 <!doctype html>
 <notebook theme="air">
-    <title>K-means clustering with 3D scatterplot</title>
-    <script id="1" type="text/markdown">
+  <title>Untitled</title>
+  <script id="1" type="text/markdown">
         # K-means clustering with 3D scatterplot
 
         This notebook demonstrates k-means clustering using a python data loader, with a 3D visualization of the resulting clusters in Three.js. It shows a sample dataset of wines clustered by attributes such as alcohol content and pH.
-    </script>
-    <script id="2" type="module" pinned="">
+  </script>
+  <script id="2" type="module" pinned="">
         import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.181.2/+esm";
         import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.181.2/examples/jsm/controls/OrbitControls/+esm";
 
@@ -108,37 +108,31 @@
         });
 
         display(renderer.domElement);
-    </script>
-    <script id="9" type="text/x-typescript" pinned="">
-        Inputs.table(wine_labeled)
-    </script>
-    <script
-        id="4"
-        type="text/x-python"
-        pinned=""
-        output="wine_labeled"
-        format="json"
-    >
-        import numpy as np
-        from scipy.cluster.vq import kmeans, vq, whiten
-        import pandas as pd
-        import json
+  </script>
+  <script id="9" type="text/x-typescript" pinned="">
+      Inputs.table(wine_labeled)
+  </script>
+  <script id="4" type="text/x-python" pinned="" output="wine_labeled" format="json">
+    import numpy as np
+    from scipy.cluster.vq import kmeans, vq, whiten
+    import pandas as pd
+    import json
 
-        df = pd.read_json('data/WineQT.json')
+    df = pd.read_json('data/WineQT.json')
 
-        feat = df[['alcohol', 'pH', 'fixed acidity']]
+    feat = df[['alcohol', 'pH', 'fixed acidity']]
 
-        whitened_data = whiten(feat)
+    whitened_data = whiten(feat)
 
-        k = 3  # Number of clusters
-        codebook, distortion = kmeans(whitened_data, k)
+    k = 3  # Number of clusters
+    codebook, distortion = kmeans(whitened_data, k)
 
-        cluster_labels, distances = vq(whitened_data, codebook)
+    cluster_labels, distances = vq(whitened_data, codebook)
 
-        df['cluster'] = cluster_labels
-        df['distance_to_centroid'] = distances
+    df['cluster'] = cluster_labels
+    df['distance_to_centroid'] = distances
 
-        result = df.to_dict('records')
-        print(json.dumps(result))
-    </script>
+    result = df.to_dict('records')
+    print(json.dumps(result))
+  </script>
 </notebook>
